@@ -1,9 +1,9 @@
+
+Learn more or give us feedback
 """
 Django settings for qed splash page.
-
 For more information on this file, see
 https://docs.djangoproject.com/en/1.10/topics/settings/
-
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
@@ -24,15 +24,30 @@ TEMPLATE_ROOT = os.path.join(PROJECT_ROOT, 'templates_qed/') #.replace('\\','/')
 #STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static_qed')
 #os.path.join(PROJECT_ROOT, 'templates_qed')
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
 # cts_api addition:
-os.environ.update({'CTS_VERSION': '1.8'})  # keeping CTS version in one place, todo: django var instead
 NODEJS_HOST = 'nginx'  # default nodejs hostname
 NODEJS_PORT = 80  # default nodejs port
 # todo: look into ws w/ django 1.10
 
-IS_PUBLIC = False
+# set debug based on env
+if (os.environ.get('IS_PUBLIC') == "True") & (os.environ.get('IS_AWS') == 'False'):
+    DEBUG = False
+else:
+    DEBUG = True
+print("DEBUG: " + str(DEBUG))
+
+# set IS_PUBLIC based on env
+if os.environ.get('IS_PUBLIC') == "True":
+    IS_PUBLIC = True  # Default to False, check in settings_docker if it is True
+    IS_DEVELOPMENT = False
+else:
+    IS_PUBLIC = False  # Default to False, check in settings_docker if it is True
+    IS_DEVELOPMENT = True
 
 ADMINS = (
+    ('Dave Lyons', 'lyons.david@epa.gov'),
     ('Tom Purucker', 'purucker.tom@epa.gov'),
     ('Kurt Wolfe', 'wolfe.kurt@epa.gov'),
     ('Nick Pope', 'i.nickpope@gmail.com'),  # non-epa email ok?
@@ -43,19 +58,26 @@ APPEND_SLASH = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(TEMPLATE_ROOT, 'splash'),
-                 os.path.join(TEMPLATE_ROOT, 'drupal_2017'),
-                 os.path.join(TEMPLATE_ROOT, 'cts'),
-                 os.path.join(TEMPLATE_ROOT, 'drupal_2014'),
-                 os.path.join(TEMPLATE_ROOT, 'hwbi'),
-                 os.path.join(TEMPLATE_ROOT, 'pop'),
-                 os.path.join(TEMPLATE_ROOT, 'pram_qaqc_reports'),
-                 os.path.join(TEMPLATE_ROOT, 'sam'),
-                 os.path.join(TEMPLATE_ROOT, 'uberqaqc'),
-                 os.path.join(TEMPLATE_ROOT, 'uber2017'),
-                 os.path.join(TEMPLATE_ROOT, 'uber2011'),
-                 os.path.join("/src", "collected_static"),
-                 os.path.join(TEMPLATE_ROOT, 'nta')
+        'DIRS': [
+            os.path.join(TEMPLATE_ROOT, 'api'),
+            os.path.join(TEMPLATE_ROOT, 'cts'),
+            os.path.join(TEMPLATE_ROOT, 'cyan'),
+            os.path.join(TEMPLATE_ROOT, 'drupal_2014'),
+            os.path.join(TEMPLATE_ROOT, 'drupal_2017'),
+            os.path.join(TEMPLATE_ROOT, 'hem'),
+            os.path.join(TEMPLATE_ROOT, 'hms'),
+            os.path.join(TEMPLATE_ROOT, 'hwbi'),
+            os.path.join(TEMPLATE_ROOT, 'misc'),
+            os.path.join(TEMPLATE_ROOT, 'pisces'),
+            os.path.join(TEMPLATE_ROOT, 'pop'),
+            os.path.join(TEMPLATE_ROOT, 'pram_qaqc_reports'),
+            os.path.join(TEMPLATE_ROOT, 'sam'),
+            os.path.join(TEMPLATE_ROOT, 'splash'),
+            os.path.join(TEMPLATE_ROOT, 'uber2017'),
+            os.path.join(TEMPLATE_ROOT, 'uber2011'),
+            os.path.join(TEMPLATE_ROOT, 'uberqaqc'),
+            os.path.join(TEMPLATE_ROOT, 'nta'),
+            os.path.join("/src", "collected_static")
                  ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -72,44 +94,81 @@ TEMPLATES = [
 
 # Application definition
 INSTALLED_APPS = (
+    'corsheaders',
     #'cts_api',
     #'cts_testing',
+    #'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    # 'django.contrib.sessions',
-    # 'django.contrib.messages',
+    'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
     #'mod_wsgi.server',  # Only needed for mod_wsgi express (Python driver for Apache) e.g. on the production server
     # 'docs',
     # 'rest_framework_swagger',
     #'cts_app',  # cts django app
     #'cts_app.filters',  # cts filters for pchem table
-    #'cts_app.cts_testing',
     #'cts_app.cts_api',
-    'splash_app',
+    #'cts_app.cts_testing',
+    #'cyan_app',  # cyan django app
+    # 'hem_app',  # hem django app
+    #'hms_app',  # hms django app
+    #'hwbi_app',  # hwbi django app
     'nta_app',
-    #'hwbi_app',
+    #'pisces_app',  # pisces django app
+    #'pram_app',  # pram django app
+    #'pop_app',  # pop django app
+    #'rest_framework',
+    #'sam_app',  # sam django app
+    'splash_app',  # splash django app
+    # 'ubertool_app',  # ubertool django app
+    # 'wqt_app',  # ubertool django app
 )
 
-# This breaks the pattern of a "pluggable" TEST_CTS django app, but it also makes it convenient to describe the server hosting the TEST API.
-TEST_CTS_PROXY_URL = "http://10.0.2.2:7080/"
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-MIDDLEWARE = (
+MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+]
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+MIDDLEWARE_CLASSES = [
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
+]
 
 ROOT_URLCONF = 'urls'
 
+ROLLBAR = {
+    'access_token': 'b626ac6c59744e5ba7ddd088a0075893',
+    # 'environment': 'development', # if DEBUG else 'production',
+    'environment': 'development',
+    'branch': 'master',
+    'root': '/var/www/qed',
+}
 
+ROLLBAR = {
+    'access_token': 'POST_SERVER_ITEM_ACCESS_TOKEN',
+    'environment': 'development',
+    'branch': 'master',
+    'root': os.getcwd()
+}
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
+try:
+    with open('secrets/secret_key_database.txt') as f:
+        DB_PASS = f.read().strip()
+except IOError as e:
+    print("secrets/secret_key_database.txt not found!")
+    DB_PASS = None
 
 DATABASES = {
     'default': {
@@ -117,7 +176,6 @@ DATABASES = {
         'NAME': os.path.join(PROJECT_ROOT, 'db.sqlite3'),
     }
 }
-
 
 # Setups databse-less test runner (Only needed for running test)
 #TEST_RUNNER = 'testing.DatabaselessTestRunner'
@@ -163,16 +221,14 @@ STATICFILES_FINDERS = (
 )
 
 STATIC_URL = '/static_qed/'
-
+# STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static_qed')
 #print('BASE_DIR = %s' %BASE_DIR)
-print('PROJECT_ROOT = %s' %PROJECT_ROOT)
-print('TEMPLATE_ROOT = %s' %TEMPLATE_ROOT)
-#print('STATIC_ROOT = %s' %STATIC_ROOT)
-
+print('PROJECT_ROOT = {0!s}'.format(PROJECT_ROOT))
+print('TEMPLATE_ROOT = {0!s}'.format(TEMPLATE_ROOT))
+# print('STATIC_ROOT = %s' %STATIC_ROOT)
 
 # Path to Sphinx HTML Docs
 # http://django-docs.readthedocs.org/en/latest/
 
 DOCS_ROOT = os.path.join(PROJECT_ROOT, 'docs', '_build', 'html')
 DOCS_ACCESS = 'public'
-
