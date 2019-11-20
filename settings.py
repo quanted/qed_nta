@@ -1,5 +1,3 @@
-
-Learn more or give us feedback
 """
 Django settings for qed splash page.
 For more information on this file, see
